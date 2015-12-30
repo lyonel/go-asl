@@ -1,8 +1,14 @@
 # go-asl
 
-Quick and dirty bindings for reading sytem log events on OS X.
+Quick and dirty Go bindings for reading sytem log events on OS X.
 
-The API is directly copied from `asl.h` (cf. https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man3/asl.3.html )
+The API is loosely modeled on `asl.h` (cf. https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man3/asl.3.html )
+
+A few utility functions have been added to the `Message` object (representing an ASL event):
+ * `Time()`: returns a `time.Time` object constructed from the event's `Time` and `TimeNanoSec` fields
+ * `Host()`, `Sender()`, `Message()`, `Facility()`: return the corresponding (text) fields
+ * `Level()`, `PID()`, `UID()`, `GID()`: return the `int` value of the corresponding fields
+ * `ID()`: returns the event unique (`int`) id
  
 ## Example
 ```
