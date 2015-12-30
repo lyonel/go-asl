@@ -15,15 +15,33 @@ import (
 )
 
 const (
-	KEY_TIME     = "Time"
-	KEY_HOST     = "Host"
-	KEY_SENDER   = "Sender"
-	KEY_FACILITY = "Facility"
-	KEY_PID      = "PID"
-	KEY_UID      = "UID"
-	KEY_GID      = "GID"
-	KEY_LEVEL    = "Level"
-	KEY_MSG      = "Message"
+	KEY_TIME               = "Time"                 /* Timestamp.  Set automatically */
+	KEY_TIME_NSEC          = "TimeNanoSec"          /* Nanosecond time. */
+	KEY_HOST               = "Host"                 /* Sender's address (set by the server). */
+	KEY_SENDER             = "Sender"               /* Sender's identification string.  Default is process name. */
+	KEY_FACILITY           = "Facility"             /* Sender's facility.  Default is "user". */
+	KEY_PID                = "PID"                  /* Sending process ID encoded as a string.  Set automatically. */
+	KEY_UID                = "UID"                  /* UID that sent the log message (set by the server). */
+	KEY_GID                = "GID"                  /* GID that sent the log message (set by the server). */
+	KEY_LEVEL              = "Level"                /* Log level number encoded as a string.  See levels above. */
+	KEY_MSG                = "Message"              /* Message text. */
+	KEY_READ_UID           = "ReadUID"              /* User read access (-1 is any user). */
+	KEY_READ_GID           = "ReadGID"              /* Group read access (-1 is any group). */
+	KEY_EXPIRE_TIME        = "ASLExpireTime"        /* Expiration time for messages with long TTL. */
+	KEY_MSG_ID             = "ASLMessageID"         /* 64-bit message ID number (set by the server). */
+	KEY_SESSION            = "Session"              /* Session (set by the launchd). */
+	KEY_REF_PID            = "RefPID"               /* Reference PID for messages proxied by launchd */
+	KEY_REF_PROC           = "RefProc"              /* Reference process for messages proxied by launchd */
+	KEY_AUX_TITLE          = "ASLAuxTitle"          /* Auxiliary title string */
+	KEY_AUX_UTI            = "ASLAuxUTI"            /* Auxiliary Uniform Type ID */
+	KEY_AUX_URL            = "ASLAuxURL"            /* Auxiliary Uniform Resource Locator */
+	KEY_AUX_DATA           = "ASLAuxData"           /* Auxiliary in-line data */
+	KEY_OPTION             = "ASLOption"            /* Internal */
+	KEY_MODULE             = "ASLModule"            /* Internal */
+	KEY_SENDER_INSTANCE    = "SenderInstance"       /* Sender instance UUID. */
+	KEY_SENDER_MACH_UUID   = "SenderMachUUID"       /* Sender Mach-O UUID. */
+	KEY_FINAL_NOTIFICATION = "ASLFinalNotification" /* syslogd posts value as a notification when message has been processed */
+	KEY_OS_ACTIVITY_ID     = "OSActivityID"         /* Current OS Activity for the logging thread */
 )
 
 const (
@@ -161,7 +179,7 @@ func (message *Message) Get(key string) string {
 
 func (message *Message) Time() time.Time {
 	if t, err := strconv.ParseInt(message.Get(KEY_TIME), 10, 64); err == nil {
-		u, _ := strconv.ParseInt(message.Get("TimeNanoSec"), 10, 64)
+		u, _ := strconv.ParseInt(message.Get(KEY_TIME_NSEC), 10, 64)
 		return time.Unix(t, u)
 	}
 	return time.Time{}
@@ -205,11 +223,6 @@ func (message *Message) Level() int {
 
 func (object *Object) Close() error {
 	C.asl_close(object.asl_object)
-	return nil
-}
-
-func (object *Object) Free() error {
-	C.asl_free(object.asl_object)
 	return nil
 }
 
