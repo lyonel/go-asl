@@ -1,6 +1,8 @@
 # go-asl
 
 Quick and dirty bindings for reading sytem log events on OS X.
+
+The API is directly copied from `asl.h` (cf. https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man3/asl.3.html )
  
 ## Example
 ```
