@@ -216,6 +216,11 @@ func (message *Message) GID() int {
 	return int(result)
 }
 
+func (message *Message) ID() int {
+	result, _ := strconv.ParseInt(message.Get(KEY_MSG_ID), 10, 64)
+	return int(result)
+}
+
 func (message *Message) Level() int {
 	result, _ := strconv.ParseInt(message.Get(KEY_LEVEL), 10, 64)
 	return int(result)
