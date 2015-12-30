@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"sync"
 	"time"
 	"unsafe"
 )
@@ -68,6 +69,7 @@ const (
 
 type Object struct {
 	asl_object C.asl_object_t
+	mu         sync.Mutex
 }
 
 type Client struct {
@@ -120,6 +122,8 @@ func NewQuery() (*Query, error) {
 }
 
 func (query *Query) SetQuery(key string, value interface{}, flags int) {
+	query.mu.Lock()
+	defer query.mu.Unlock()
 	k := C.CString(key)
 	defer C.free(unsafe.Pointer(k))
 	v := C.CString(fmt.Sprintf("%v", value))
@@ -136,6 +140,8 @@ func (query *Query) SetQuery(key string, value interface{}, flags int) {
 }
 
 func (client *Client) Search(query *Query) *Response {
+	client.mu.Lock()
+	defer client.mu.Unlock()
 	response := &Response{}
 	response.asl_object = C.asl_search(client.asl_object, query.asl_object)
 
@@ -143,6 +149,8 @@ func (client *Client) Search(query *Query) *Response {
 }
 
 func (response *Response) Next() *Message {
+	response.mu.Lock()
+	defer response.mu.Unlock()
 	if m := C.asl_next(response.asl_object); m != nil {
 		message := &Message{}
 		message.asl_object = m
@@ -153,6 +161,8 @@ func (response *Response) Next() *Message {
 }
 
 func (message *Message) Key(i int) string {
+	message.mu.Lock()
+	defer message.mu.Unlock()
 	if v := C.asl_key(message.asl_object, C.uint32_t(i)); v != nil {
 		return C.GoString(v)
 	} else {
@@ -168,6 +178,8 @@ func (message *Message) Keys() (result []string) {
 }
 
 func (message *Message) Get(key string) string {
+	message.mu.Lock()
+	defer message.mu.Unlock()
 	k := C.CString(key)
 	defer C.free(unsafe.Pointer(k))
 	if v := C.asl_get(message.asl_object, k); v != nil {
@@ -175,6 +187,14 @@ func (message *Message) Get(key string) string {
 	} else {
 		return ""
 	}
+}
+
+func (message *Message) IsSet(key string) bool {
+	message.mu.Lock()
+	defer message.mu.Unlock()
+	k := C.CString(key)
+	defer C.free(unsafe.Pointer(k))
+	return C.asl_get(message.asl_object, k) != nil
 }
 
 func (message *Message) Time() time.Time {
@@ -227,11 +247,15 @@ func (message *Message) Level() int {
 }
 
 func (object *Object) Close() error {
+	object.mu.Lock()
+	defer object.mu.Unlock()
 	C.asl_close(object.asl_object)
 	return nil
 }
 
 func (object *Object) Release() error {
+	object.mu.Lock()
+	defer object.mu.Unlock()
 	C.asl_release(object.asl_object)
 	return nil
 }
