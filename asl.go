@@ -9,6 +9,8 @@ import "C"
 import (
 	"errors"
 	"fmt"
+	"strconv"
+	"time"
 	"unsafe"
 )
 
@@ -115,7 +117,7 @@ func (query *Query) SetQuery(key string, value interface{}, flags int) {
 	C.asl_set_query(query.asl_object, k, v, C.uint32_t(flags))
 }
 
-func (client *Client) Search(query Query) *Response {
+func (client *Client) Search(query *Query) *Response {
 	response := &Response{}
 	response.asl_object = C.asl_search(client.asl_object, query.asl_object)
 
@@ -140,6 +142,13 @@ func (message *Message) Key(i int) string {
 	}
 }
 
+func (message *Message) Keys() (result []string) {
+	for i := 0; message.Key(i) != ""; i++ {
+		result = append(result, message.Key(i))
+	}
+	return result
+}
+
 func (message *Message) Get(key string) string {
 	k := C.CString(key)
 	defer C.free(unsafe.Pointer(k))
@@ -148,6 +157,50 @@ func (message *Message) Get(key string) string {
 	} else {
 		return ""
 	}
+}
+
+func (message *Message) Time() time.Time {
+	if t, err := strconv.ParseInt(message.Get(KEY_TIME), 10, 64); err == nil {
+		u, _ := strconv.ParseInt(message.Get("TimeNanoSec"), 10, 64)
+		return time.Unix(t, u)
+	}
+	return time.Time{}
+}
+
+func (message *Message) Host() string {
+	return message.Get(KEY_HOST)
+}
+
+func (message *Message) Sender() string {
+	return message.Get(KEY_SENDER)
+}
+
+func (message *Message) Facility() string {
+	return message.Get(KEY_FACILITY)
+}
+
+func (message *Message) Message() string {
+	return message.Get(KEY_MSG)
+}
+
+func (message *Message) PID() int {
+	result, _ := strconv.ParseInt(message.Get(KEY_PID), 10, 64)
+	return int(result)
+}
+
+func (message *Message) UID() int {
+	result, _ := strconv.ParseInt(message.Get(KEY_UID), 10, 64)
+	return int(result)
+}
+
+func (message *Message) GID() int {
+	result, _ := strconv.ParseInt(message.Get(KEY_GID), 10, 64)
+	return int(result)
+}
+
+func (message *Message) Level() int {
+	result, _ := strconv.ParseInt(message.Get(KEY_LEVEL), 10, 64)
+	return int(result)
 }
 
 func (object *Object) Close() error {
