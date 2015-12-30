@@ -10,6 +10,17 @@ A few utility functions have been added to the `Message` object (representing an
  * `Level()`, `PID()`, `UID()`, `GID()`: return the `int` value of the corresponding fields
  * `ID()`: returns the event unique (`int`) id
  
+Unline to its C-equivalent (`asl_set_query`), `Query.SetQuery()` can accept numerical values (`int`, `uint`, `int64`, `float64`, etc.) in addition to `string`s and will automatically convert them to text, setting the appropriate flag (`asl.QUERY_OP_NUMERIC`).
+This makes the following statements strictly equivalent:
+```
+    q.SetQuery(asl.KEY_LEVEL, "3", asl.QUERY_OP_LESS_EQUAL | asl.QUERY_OP_NUMERIC)
+```
+and
+```
+    q.SetQuery(asl.KEY_LEVEL, 3, asl.QUERY_OP_LESS_EQUAL)
+```
+
+
 ## Example
 ```
 package main
